@@ -59,6 +59,13 @@ if status ~= 0
   end
 end
 
+% Run any new tasks
+changesPath = fullfile(root, 'cortexlab', '+git', 'changes.m');
+if exist(changesPath, 'file')
+  git.changes;
+  delete(changesPath);
+end
+
 cd(origDir)
 % the submodule updates can interfere with Matlab paths, so we have to
 % restore the original paths

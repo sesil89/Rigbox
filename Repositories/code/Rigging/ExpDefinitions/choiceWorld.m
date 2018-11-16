@@ -61,7 +61,7 @@ wheelGain = iff(enoughTrials, normalGain, gain);
 % condition can be chosen in a performance-dependent manner)
 
 % Resetting pre-stim quiescent period
-prestimQuiescentPeriod = at(p.prestimQuiescentTime, events.newTrial); 
+prestimQuiescentPeriod = at(p.prestimQuiescentTime.map(@rnd.sample), events.newTrial); 
 preStimQuiescence = sig.quiescenceWatch(prestimQuiescentPeriod, t, wheel, quiescThreshold); 
 % Stimulus onset
 stimOn = at(true, preStimQuiescence); 
@@ -180,6 +180,7 @@ events.poorPerf = poorPerformance;
 events.azimuth = azimuth;
 
 % Trial times
+events.prestimQuiescentPeriod = prestimQuiescentPeriod;
 events.stimulusOn = stimOn;
 events.interactiveOn = stimOn;
 events.stimulusOff = stimOff;
@@ -201,7 +202,7 @@ events.endAfter = trialDataInit.endAfter/60;
 
 % Trial side probability
 events.bias = bias;
-events.proportionLeft = trialData.proportionLeft;
+events.proportionLeft = trialData.proportionLeft(1);
 events.trialsToSwitch = trialData.trialsToSwitch;
 
 % Performance
@@ -244,11 +245,11 @@ p.normalGain = 4; % ~= 10 @ 90 deg;
 p.encoderRes = 1024; 
 
 % Trial side probability switching
-p.proportionLeft = 0.5;
-p.blockLength = Inf;
+p.proportionLeft = [0.2, 0.8]';
+p.blockLength = [10, 100, 50]';
 
 % Timing
-p.prestimQuiescentTime = 0.2; % (seconds)
+p.prestimQuiescentTime = [0.2, 0.5, 0.35]'; % (seconds)
 % p.cueInteractiveDelay = 0.2;
 % Inter-trial interval on correct response
 p.itiHit = 1; % (seconds)
@@ -321,18 +322,10 @@ trialDataInit.repeatOnMiss = repeatOnMiss;
 trialDataInit.repeatTrial = false;
 % Initialize hit/miss
 trialDataInit.hit = nan;
-% Store block length for sampling later
-trialDataInit.blockLength = blockLength;
-% Initialize trial countdown for trial side switch
-if numel(blockLength)>1
-  trialDataInit.trialsToSwitch = randsample(blockLength,1);
-else
-  trialDataInit.trialsToSwitch = blockLength;
-end
 % Initialize trial side proportions
-trialDataInit.proportionLeft = iff(rand(1) <= 0.5, proportionLeft, 1-proportionLeft);
-% Initialize which side takes the probability
-trialDataInit.trialSide = iff(rand(1) <= proportionLeft, -1, 1);
+trialDataInit.proportionLeft = 0.5;
+% Store block length for sampling later
+trialDataInit.blockLength = Inf;
 
 %%%% Load the last experiment for the subject if it exists
 % (note: MC creates folder on initilization, so start search at 1-back)
@@ -409,19 +402,18 @@ if useOldParams
     
     % If the subject did over 200 trials last session, reduce the reward by
     % 0.1, unless it is 2ml
-    if length(previousBlock.newTrialValues) > 200 && lastRewardSize > 1.6
+    if length(previousBlock.newTrialValues) > 200 && lastRewardSize > 1.5
         trialDataInit.rewardSize = lastRewardSize-0.1;
     else
         trialDataInit.rewardSize = lastRewardSize;
     end
     if learned
       % Initialize trial side proportions
-      trialDataInit.proportionLeft = iff(rand(1) <= 0.5, 0.2, 0.8);
+      trialDataInit.proportionLeft = proportionLeft;
       % Remove repeat on incorrect
       trialDataInit.repeatOnMiss = zeros(1,length(trialDataInit.contrastSet));
       % Store block length for sampling later
-      trialDataInit.blockLength = 50;
-      trialDataInit.trialsToSwitch = 50;
+      trialDataInit.blockLength = blockLength;
     end
     
 else
@@ -435,8 +427,14 @@ else
     trialDataInit.rewardSize = rewardSize;
 end
 
+% Initialize trial countdown for trial side switch
+trialDataInit.trialsToSwitch = round(rnd.sample(trialDataInit.blockLength));
 % Set the first contrast
 trialDataInit.trialContrast = randsample(trialDataInit.contrastSet(trialDataInit.useContrasts),1);
+% Initialize which side takes the probability
+trialDataInit.proportionLeft = trialDataInit.proportionLeft(randperm(length(trialDataInit.proportionLeft)));
+
+trialDataInit.trialSide = iff(rand(1) <= trialDataInit.proportionLeft(1), -1, 1);
 end
 
 function trialData = updateTrialData(trialData,responseData)
@@ -578,12 +576,14 @@ trialData.trialContrast = randsample(trialData.contrastSet(trialData.useContrast
 %%%% Pick next side
 trialData.trialsToSwitch = trialData.trialsToSwitch - 1;
 if trialData.trialsToSwitch == 0
-  trialData.proportionLeft = 1-trialData.proportionLeft;
-  trialData.trialsToSwitch = iff(numel(trialData.blockLength) > 1,...
-  randsample(trialData.blockLength,1), trialData.blockLength);
+  if length(trialData.proportionLeft) > 1
+    pLeft = randsample(trialData.proportionLeft(2:end),1);
+    trialData.proportionLeft = [pLeft; trialData.proportionLeft(trialData.proportionLeft~=pLeft)];
+  end
+  trialData.trialsToSwitch = round(rnd.sample(trialData.blockLength));
 end
 
-trialData.trialSide = iff(rand <= trialData.proportionLeft, -1, 1);
+trialData.trialSide = iff(rand <= trialData.proportionLeft(1), -1, 1);
 end
 function learned = isLearned(ref)
 learned = false;
@@ -643,11 +643,12 @@ for i = length(expRef):-1:1
       contrastSet = unique(pooledCont);
       nn = arrayfun(@(c)sum(pooledCont==c & pooledIncl), contrastSet);
       pp = arrayfun(@(c)sum(pooledCont==c & pooledIncl & pooledChoice==-1), contrastSet)./nn;
-      pars = psy.mle_fit_psycho([contrastSet';nn';pp'], 'erf_psycho',...
+      pars = psy.mle_fit_psycho([contrastSet';nn';pp'], 'erf_psycho_2gammas',...
         [mean(contrastSet), 3, 0.05],...
         [min(contrastSet), 10, 0],...
+        [max(contrastSet), 30, 0.4],...
         [max(contrastSet), 30, 0.4]);
-      if abs(pars(1)) < 16 && pars(2) < 19 && pars(3) < 0.2
+      if abs(pars(1)) < 16 && pars(2) < 19 && pars(3) < 0.2 && pars(4) < 0.2
         learned = true;
       else
         fprintf('Fit parameter values below threshold\n')

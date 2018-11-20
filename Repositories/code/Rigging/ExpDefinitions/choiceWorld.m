@@ -455,7 +455,6 @@ currentContrastIdx = trialData.trialContrast == trialData.contrastSet;
 
 %%%% Define response type based on trial condition
 trialData.hit = response~=3 && stimDisplacement*trialData.trialSide < 0;
-disp(['hit =' num2str(trialData.hit)])
 % Index for whether contrast was on the left or the right as performance is
 % calculated for both sides.  If the contrast was on the left, the index is
 % 1, otherwise 2

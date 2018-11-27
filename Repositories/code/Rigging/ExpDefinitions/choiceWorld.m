@@ -118,7 +118,7 @@ poorPerformance = iff(trialData.proportionLeft == 0.5, ...
 % minTrials have been completed, the subject is either too slow or exhibits
 % a significant drop in performance.  If the subject has not completed the
 % minimum number of trials in 45 minutes it is also classed as disengaged.
-disengaged = iff(events.trialNum > p.minTrials, (tooSlow | poorPerformance), ...
+disengaged = iff(events.trialNum > p.minTrials, tooSlow, ...
   events.expStart.delay(60*45));
 % The session is finished when either the session has been running for x
 % seconds, where x is trialDataInit.endAfter (20min on the first day, 40min
@@ -174,7 +174,7 @@ visStim.stim = stim;
 
 %% Display and save
 events.propL = trialData.proportionLeft == 0.5;
-events.pPerf = (baselinePerf - windowedPerf)/baselinePerf > p.pctPerfDecrease/100;
+% events.pPerf = (baselinePerf - windowedPerf)/baselinePerf > p.pctPerfDecrease/100;
 events.poorPerf = poorPerformance;
 % Wheel and stim
 events.azimuth = azimuth;
@@ -193,7 +193,6 @@ events.endTrial = at(~trialData.repeatTrial, stimOff.identity);
 % Used to identify what form of disengagement has occured
 events.disengaged = skipRepeats(keepWhen(cond(...
   tooSlow, 'long RT',...
-  poorPerformance, 'perf decrease',...
   true, 'false'), events.trialNum > p.minTrials));
 events.windowedRT = windowedRT.map(fun.partial(@sprintf, '%.1f sec'));
 events.baselineRT = baselineRT.map(fun.partial(@sprintf, '%.1f sec'));
@@ -455,6 +454,7 @@ currentContrastIdx = trialData.trialContrast == trialData.contrastSet;
 
 %%%% Define response type based on trial condition
 trialData.hit = response~=3 && stimDisplacement*trialData.trialSide < 0;
+
 % Index for whether contrast was on the left or the right as performance is
 % calculated for both sides.  If the contrast was on the left, the index is
 % 1, otherwise 2
@@ -643,10 +643,9 @@ for i = length(expRef):-1:1
       nn = arrayfun(@(c)sum(pooledCont==c & pooledIncl), contrastSet);
       pp = arrayfun(@(c)sum(pooledCont==c & pooledIncl & pooledChoice==-1), contrastSet)./nn;
       pars = psy.mle_fit_psycho([contrastSet';nn';pp'], 'erf_psycho_2gammas',...
-        [mean(contrastSet), 3, 0.05],...
-        [min(contrastSet), 10, 0],...
-        [max(contrastSet), 30, 0.4],...
-        [max(contrastSet), 30, 0.4]);
+        [mean(contrastSet), 3, 0.05, 0.05],...
+        [min(contrastSet), 10, 0, 0],...
+        [max(contrastSet), 30, 0.4, 0.4]);
       if abs(pars(1)) < 16 && pars(2) < 19 && pars(3) < 0.2 && pars(4) < 0.2
         learned = true;
       else

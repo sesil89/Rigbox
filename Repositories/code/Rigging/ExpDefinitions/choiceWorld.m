@@ -245,7 +245,7 @@ p.encoderRes = 1024;
 
 % Trial side probability switching
 p.proportionLeft = [0.2, 0.8]';
-p.blockLength = [10, 100, 50]';
+p.blockLength = [20, 100, 50]';
 
 % Timing
 p.prestimQuiescentTime = [0.2, 0.5, 0.35]'; % (seconds)

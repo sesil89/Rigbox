@@ -5,18 +5,18 @@
 % experiments and processing the resulting data.
 % 
 % For instructions on how to run the examples from the
-% <https://www.biorxiv.org/content/10.1101/672204v3 Rigbox paper>, see
+% <https://doi.org/10.1523/ENEURO.0406-19.2020 Rigbox paper>, see
 % <./paper_examples.html this guide>.
 
 %% Installing Rigbox
 % Below are some instructions for installing Rigbox. There are two guides,
-% the first is a thorough guide for users unfarmilliar with MATLAB and Git.
+% the first is a thorough guide for users unfamiliar with MATLAB and Git.
 % The second is for 'power users' who have a basic understanding of these
 % things.
 % 
 % # <./install.html Detailed install instructions>
-% # <https://github.com/cortex-lab/Rigbox/blob/master/README.md Installing
-% for power users>
+% # <https://github.com/cortex-lab/Rigbox/blob/master/README.md#installation 
+% Installing for power users>
 % 
 
 %% Setting up experiments
@@ -39,7 +39,7 @@
 
 %% Running full experiments
 % Before you can run a complete experiment, you must set up Rigbox (see
-% above section).  Once this is done there you can follow on of the below
+% above section).  Once this is done there you can follow one of the below
 % sections to run a full experiment.
 
 %% Creating experiments

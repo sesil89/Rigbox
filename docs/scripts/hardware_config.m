@@ -368,7 +368,7 @@ lickDetector.DaqId = 'Dev1'; % NI DAQ devices are named Dev# by default
 lickDetector.DaqChannelId = 'ctr1';
 
 % Save these two into our hardware file
-save(hardware, 'stimWindow', 'lickDetector', '-append')
+save(hardware, 'mouseInput', 'lickDetector', '-append')
 
 %% Hardware outputs
 % HW.DAQCONTROLLER
@@ -445,7 +445,7 @@ clockOut.Frequency = 180; % Hz
 clockOut.Enable = 'on'; % Switch to enable and disable output
 timeline.Outputs(end+1) = clockOut; % Assign to outputs
 
-%Save your hardware.mat file
+% Save your hardware.mat file
 save(hardware, 'timeline', '-append')
 
 % For more information on configuring and using Timeline, see
@@ -477,7 +477,7 @@ TareCommand = 84; % 'T'
 % and units, e.g. '+ 24.01 g'.
 FormatSpec = '%f'
 
-%Save your hardware.mat file
+% Save your hardware.mat file
 save(hardware, 'scale', '-append')
 
 %%% Using the scale
@@ -623,6 +623,6 @@ d = daq.getDevices % Availiable devices and their info
 %% Etc.
 % Author: Miles Wells
 %
-% v1.2.1
+% v1.2.2
 
 %#ok<*NOPTS,*NASGU,*ASGLU>
